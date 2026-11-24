@@ -1,0 +1,42 @@
+name: Publish Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "extraer_audio.bat"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Update latest tag and publish asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="latest"
+          TITLE="Audio Extractor (Windows)"
+          NOTES="Descarga directa de \`extraer_audio.bat\` (actualizado automáticamente desde \`${GITHUB_SHA::7}\`)."
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "$TAG"
+          git push -f origin "$TAG"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TITLE" --notes "$NOTES"
+            gh release upload "$TAG" extraer_audio.bat --clobber
+          else
+            gh release create "$TAG" extraer_audio.bat \
+              --title "$TITLE" \
+              --notes "$NOTES"
+          fi

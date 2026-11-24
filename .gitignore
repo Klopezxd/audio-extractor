@@ -1,0 +1,23 @@
+# Windows & FFmpeg portable
+bin/
+*.exe
+
+# Multimedia de prueba (archivos pesados)
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.wmv
+*.flv
+*.webm
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.ogg
+
+# Sistema / IDEs
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
