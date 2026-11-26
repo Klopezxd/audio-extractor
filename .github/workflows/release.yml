@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "extraer_audio.bat"
+      - ".github/workflows/release.yml"
   workflow_dispatch:
 
 permissions:
@@ -42,8 +43,32 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="latest"
-          TITLE="Audio Extractor (Windows)"
-          NOTES="Descarga directa de \`extraer_audio.bat\` (actualizado automáticamente desde \`${GITHUB_SHA::7}\`)."
+          TITLE="Audio Extractor (Windows · Cero Python)"
+          SHORT_SHA="${GITHUB_SHA::7}"
+          SHA256=$(sha256sum extraer_audio.bat | awk '{print $1}')
+
+          SHORT_SHA="$SHORT_SHA" SHA256="$SHA256" python3 - <<'PY'
+          from pathlib import Path
+          import os
+
+          notes = f"""Utilidad nativa para Windows que extrae la pista de audio (`.m4a`) de videos pesados mediante `Stream Copy` sin pérdida en segundos antes de subirlos a [Transcriptor Suite](https://github.com/Klopezxd/transcriptor-suite).
+
+          ### Cómo usarlo
+          1. Descarga **`extraer_audio.bat`** abajo en la sección **Assets**.
+          2. Arrastra uno o varios videos directamente encima del archivo `.bat` (o ábrelo con doble clic).
+          3. Si no tienes FFmpeg instalado en el equipo, escribe `S` cuando pregunte si deseas instalarlo automáticamente.
+          4. Sube el archivo `<video>_audio.m4a` generado junto a tu video original.
+
+          ### Transparencia y verificación
+          * **Código fuente:** [Inspeccionar `extraer_audio.bat` en GitHub](https://github.com/Klopezxd/audio-extractor/blob/main/extraer_audio.bat)
+          * **Commit:** `{os.environ['SHORT_SHA']}`
+          * **SHA-256:** `{os.environ['SHA256']}`
+          """
+          Path("/tmp/release_notes.md").write_text(
+              "\n".join(line.removeprefix("          ") for line in notes.splitlines()) + "\n",
+              encoding="utf-8",
+          )
+          PY
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -51,10 +76,10 @@ jobs:
           git push -f origin "$TAG"
 
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --title "$TITLE" --notes "$NOTES"
+            gh release edit "$TAG" --title "$TITLE" --notes-file /tmp/release_notes.md
             gh release upload "$TAG" extraer_audio.bat --clobber
           else
             gh release create "$TAG" extraer_audio.bat \
               --title "$TITLE" \
-              --notes "$NOTES"
+              --notes-file /tmp/release_notes.md
           fi
