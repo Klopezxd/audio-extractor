@@ -19,6 +19,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify CRLF line endings for Windows batch script
+        run: |
+          python3 -c '
+          from pathlib import Path
+          p = Path("extraer_audio.bat")
+          data = p.read_bytes()
+          normalized = data.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+          if not normalized.endswith(b"\r\n"):
+              normalized += b"\r\n"
+          if normalized != data:
+              p.write_bytes(normalized)
+          final = p.read_bytes()
+          crlf = final.count(b"\r\n")
+          bare_lf = final.count(b"\n") - crlf
+          print(f"extraer_audio.bat bytes={len(final)} crlf={crlf} bare_lf={bare_lf}")
+          assert crlf > 0 and bare_lf == 0, "Invalid line endings for Windows .bat"
+          '
+
       - name: Update latest tag and publish asset
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

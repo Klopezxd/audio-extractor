@@ -69,9 +69,10 @@ if "!FFMPEG!"=="" (
     if /i "!INSTALAR!"=="S" (
         echo.
         echo [1/2] Descargando FFmpeg portable para la suite...
+        set "BAT_DIR=%~dp0"
         powershell -NoProfile -ExecutionPolicy Bypass -Command ^
             "$ProgressPreference = 'SilentlyContinue'; " ^
-            "$dest = Join-Path '%~dp0' 'bin'; " ^
+            "$dest = Join-Path $env:BAT_DIR 'bin'; " ^
             "New-Item -ItemType Directory -Force -Path $dest | Out-Null; " ^
             "$zip = Join-Path $env:TEMP 'ffmpeg.zip'; " ^
             "$ext = Join-Path $env:TEMP 'ffmpeg_ext'; " ^
@@ -119,14 +120,15 @@ if "!FFMPEG!"=="" (
 color 0B
 
 :: 4. Si no arrastro archivos, pedir ruta por teclado
-if "%~1"=="" (
-    echo Arrastra un archivo de video a esta ventana o escribe su ruta:
-    set /p "INPUT_FILE=> "
-    set "INPUT_FILE=!INPUT_FILE:"=!"
-    if "!INPUT_FILE!"=="" exit /b 0
-    call :PROCESAR "!INPUT_FILE!"
-    goto :FIN
-)
+if not "%~1"=="" goto :LOOP
+echo Arrastra un archivo de video a esta ventana o escribe su ruta:
+set "INPUT_FILE="
+set /p "INPUT_FILE=> "
+if not defined INPUT_FILE exit /b 0
+set "INPUT_FILE=!INPUT_FILE:"=!"
+if "!INPUT_FILE!"=="" exit /b 0
+call :PROCESAR "!INPUT_FILE!"
+goto :FIN
 
 :: 5. Procesar todos los archivos arrastrados (uno o varios a la vez)
 :LOOP
